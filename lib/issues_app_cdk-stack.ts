@@ -10,7 +10,7 @@ export class IssuesAppCdkStack extends Stack {
     super(scope, id, props);
 
     // VPCを定義
-    const vpc = new ec2.Vpc(this, 'issues-live-vpc', {
+    const vpc = new ec2.Vpc(this, 'IssuesLiveVPC', {
       ipAddresses: ec2.IpAddresses.cidr('10.1.0.0/16'),
       maxAzs: 1,
       subnetConfiguration: [
@@ -23,7 +23,7 @@ export class IssuesAppCdkStack extends Stack {
     });
 
     // VPCゲートウェイエンドポイント追加
-    vpc.addGatewayEndpoint('s3-endpoint', {
+    vpc.addGatewayEndpoint('S3Endpoint', {
       service: ec2.GatewayVpcEndpointAwsService.S3,
       subnets: [
         { subnetType: ec2.SubnetType.PUBLIC },
@@ -37,7 +37,7 @@ export class IssuesAppCdkStack extends Stack {
     });
 
     // EC2インスタンス用のセキュリティグループを設定
-    const webSecurityGroup = new ec2.SecurityGroup(this, 'issues-live-web-sg', {
+    const webSecurityGroup = new ec2.SecurityGroup(this, 'IssuesLiveWebSg', {
       vpc,
       allowAllOutbound: true,
     });
@@ -46,7 +46,7 @@ export class IssuesAppCdkStack extends Stack {
     webSecurityGroup.connections.allowFromAnyIpv4(ec2.Port.tcp(22), 'Allow inbound SSH');
 
     // EC2のIAMロール
-    const webServerRole = new iam.Role(this, 'issues-live-web-role', {
+    const webServerRole = new iam.Role(this, 'IssuesLiveWebRole', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess'),
@@ -54,7 +54,7 @@ export class IssuesAppCdkStack extends Stack {
     });
 
     // EC2インスタンスの定義
-    const webServer = new ec2.Instance(this, 'issues-live-web', {
+    const webServer = new ec2.Instance(this, 'IssuesLiveWeb', {
       vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       securityGroup: webSecurityGroup,
@@ -68,7 +68,7 @@ export class IssuesAppCdkStack extends Stack {
     // webServer.addUserData(userDataScript);
 
     // S3バケット
-    const bucket = new s3.Bucket(this, 'issues-live-bucket', {
+    const bucket = new s3.Bucket(this, 'IssuesLiveBucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
       bucketName: 'issues-app-production',
@@ -81,7 +81,8 @@ export class IssuesAppCdkStack extends Stack {
             'http://127.0.0.1:*',
             `http://${webServer.instancePublicIp}`,
             `https://${webServer.instancePublicIp}`,
-          ]
+          ],
+          maxAge: 3,
         }
       ],
     });
