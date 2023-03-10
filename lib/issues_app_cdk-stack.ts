@@ -50,6 +50,7 @@ export class IssuesAppCdkStack extends Stack {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
       ],
     });
 
@@ -60,7 +61,7 @@ export class IssuesAppCdkStack extends Stack {
       securityGroup: webSecurityGroup,
       role: webServerRole,
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.MICRO),
-      machineImage: amazonLinux2
+      machineImage: amazonLinux2,
     });
 
     // EC2インスタンスにユーザーデータ追加
